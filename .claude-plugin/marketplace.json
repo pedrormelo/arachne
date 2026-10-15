@@ -1,0 +1,16 @@
+{
+  "name": "arachne",
+  "owner": {
+    "name": "Pedro Melo"
+  },
+  "plugins": [
+    {
+      "name": "arachne",
+      "source": "./",
+      "description": "The CORTEX method for Claude Code: a Markdown vault as shared memory for agent roles, handoffs and architecture decisions."
+    }
+  ],
+  "metadata": {
+    "description": "The CORTEX method for Claude Code: a Markdown vault as shared memory for agent roles."
+  }
+}
