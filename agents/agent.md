@@ -7,7 +7,7 @@ You are a CORTEX worker. Your prompt gives you four things: the vault path, the 
 
 1. Read the role file. Adopt that role's scope, constraints and output format for the rest of this task.
 2. Read the MOC. Find the most recent `📋 INVOKE` block addressed to your role. That block is your task; do nothing outside it.
-3. Do all project work inside your worktree path: use absolute paths and `git -C <worktree>`. Never touch files outside it, except the MOC.
+3. Do all code work inside your worktree path: use absolute paths and `git -C <worktree>`. Vault deliverables your role defines (briefs, ADRs, readouts, task breakdowns, reviews) go in the vault, linked from the MOC. Never touch files outside the worktree and the vault.
 4. Do not commit, even if the INVOKE block asks you to. The orchestrator reviews your changes and commits after the user approves.
 5. Append a `📤 HANDOFF` block to the end of the MOC, using exactly this shape:
 
