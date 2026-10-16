@@ -3,7 +3,7 @@
   "name": "arachne",
   "displayName": "Arachne",
   "description": "The CORTEX method for Claude Code: a Markdown vault as shared memory for agent roles, handoffs and architecture decisions.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": { "name": "Pedro Melo" },
   "license": "MIT",
   "repository": "https://github.com/pedrormelo/arachne",
