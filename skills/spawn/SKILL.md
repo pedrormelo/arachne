@@ -24,7 +24,7 @@ Worktree: {worktree path}
 
 ## Choose the backend
 
-- `spawnBackend: "orca"`: run `orca --version`. If it fails, tell the user that Orca is not available and use the native backend for this spawn.
+- `spawnBackend: "orca"`: run `orca status --json`. If the command fails or the runtime is not reachable, tell the user that Orca is not available and use the native backend for this spawn.
 - `spawnBackend: "native"`: use the native backend.
 
 ## Native backend
@@ -41,10 +41,10 @@ Worktree: {worktree path}
 
 ## Orca backend
 
-1. Make sure Orca knows the repository: if `orca repo list --json` does not include `{repo_root}`, run `orca repo add {repo_root}`. Then create the worktree:
+1. Make sure Orca knows the repository: if `orca repo list --json` does not include `{repo_root}`, run `orca repo add --path {repo_root}`. Then create the worktree. `--no-parent` keeps Orca from filing it under the session you are running in:
 
    ```
-   orca worktree create --name {role}-{task} --repo path:{repo_root} --json
+   orca worktree create --name {role}-{task} --repo path:{repo_root} --no-parent --json
    ```
 
    Keep the worktree path from the JSON output.
@@ -55,13 +55,26 @@ Worktree: {worktree path}
    ```
 
    Keep the terminal handle.
-3. Send the four paths:
+3. Wait until the session is ready for input. Read it with `orca terminal read --terminal {handle} --limit 30` every few seconds. `orca terminal wait --for tui-idle` is not enough, because it also returns while a dialog is open.
+   - **Folder trust prompt** ("Is this a project you created or one you trust?"): the worktree is a fresh checkout of the project the user asked you to work on. Tell the user you are accepting it, then send a down arrow (`--text $'\e[B'`) followed by an Enter (`--text "" --enter`).
+   - **Any other dialog:** show its text to the user and ask what to choose. Never pick an option that grants new permissions on your own.
+   - The session is ready when the input prompt `❯` shows with `arachne:agent` in the status line.
+4. Count the closing blocks already in the MOC, then send the four paths:
 
    ```
+   node <plugin-root>/scripts/wait-block.mjs {moc}
    orca terminal send --terminal {handle} --text "<the four paths, on one line>" --enter
    ```
 
-4. Monitor: `orca terminal wait --terminal {handle} --for tui-idle`, then read the MOC for a new block. Report to the user only on a state change (new HANDOFF, BLOCKED or DONE), never on each check. The user can open the terminal in Orca and talk to the role directly.
+   `<plugin-root>` is two levels above this skill's base directory.
+5. Monitor the MOC, not the terminal. Run the wait script in the background, with the count from step 4:
+
+   ```
+   node <plugin-root>/scripts/wait-block.mjs {moc} {count} 1800
+   ```
+
+   It prints the first new `📤 HANDOFF`, `⚠️ BLOCKED` or `✅ DONE` block, or exits with status 1 after the timeout in seconds. Use it instead of grep: emoji matching is unreliable in some shells. While waiting, read the terminal now and then to catch permission prompts, and relay them to the user. Report only state changes. The user can open the terminal in Orca and talk to the role directly.
+6. After the block appears, close the session: `orca terminal close --terminal {handle}`.
 
 ## After the agent finishes
 
@@ -69,7 +82,7 @@ Worktree: {worktree path}
    - `⚠️ BLOCKED`: relay the question to the user, mirror it in `⚠️ Active blockers`, and stop.
    - `📤 HANDOFF`: review the changes with `git -C {worktree} status` and `git -C {worktree} diff`.
 2. The worker does not commit. Summarize the changes for the user and commit in the worktree only after the user approves. Merging the branch is the user's call.
-3. When the branch is merged or discarded, remove the worktree: `git -C {repo_root} worktree remove {worktree}` (native) or `orca worktree rm` (Orca).
+3. When the branch is merged or discarded, remove the worktree: `git -C {repo_root} worktree remove {worktree}` (native) or `orca worktree rm --worktree path:{worktree}` (Orca).
 4. Log the result in the MOC and decide the next step: a new INVOKE, or a `✅ DONE` that closes the chain.
 
 ## Rules
